@@ -1,0 +1,13 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile",
+	"context": ".."
+  },
+  "mounts": [
+    "source=${localEnv:USERPROFILE}/AppData/Local/nvim,target=/home/nvim/.config/nvim,type=bind"
+  ],
+  "features": {
+    "ghcr.io/duduribeiro/devcontainer-features/neovim:1": { "version": "nightly" }
+  },
+  "remoteUser": "nvim"
+}

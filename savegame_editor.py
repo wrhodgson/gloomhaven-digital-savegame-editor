@@ -276,23 +276,35 @@ class SaveGameEditor:
                 perk_checks or current_perk_checks,
             )
 
-    def toggle_scenario_unlock(self, scenario=1, unlock=None):
-        scenario_span = re.search(
-            b"\x12Quest_Campaign_" + bytes(f"{scenario:03d}", "utf-8") + b"(.*?)\t", self.txt
-        ).span(1)
-        current_scenario_state = struct.unpack("<I", self.txt[scenario_span[1] - 4 : scenario_span[1]])[0]
-        if unlock is not None:
+    def toggle_scenario_status(self, scenario=1, status=None):
+        if scenario == 19:
+            scenario_span = re.search(
+                b"\x12Quest_Campaign_" + bytes(f"{scenario:03d}", "utf-8") + b"(.*?\t.*?)\t", self.txt
+            ).span(1)
+        else:
+            scenario_span = re.search(
+                b"\x12Quest_Campaign_" +
+                bytes(f"{scenario:03d}", "utf-8") + b"(.*?)\t", self.txt
+            ).span(1)
+        current_scenario_state = struct.unpack(
+            "<I", self.txt[scenario_span[1] - 4: scenario_span[1]])[0]
+        if status is not None:
             if self.scenario_state_dict[current_scenario_state] in ("Locked", "Unlocked", "Blocked"):
-                if unlock:
-                    new_scenario_state_str = struct.pack("<I", 2)
-                else:
-                    new_scenario_state_str = struct.pack("<I", 1)
-                scenario_state_span = (scenario_span[1] - 4, scenario_span[1])
-                self.txt = self._replace_substring_inplace(self.txt, new_scenario_state_str, scenario_state_span)
-                new_scenario_state = struct.unpack("<I", self.txt[scenario_span[1] - 4 : scenario_span[1]])[0]
-                cur_state = self.scenario_state_dict[current_scenario_state]
-                new_state = self.scenario_state_dict[new_scenario_state]
-                print(f"Scenario {scenario} was changed from {cur_state} to {new_state}.")
+                new_scenario_state = list(self.scenario_state_dict.keys(
+                ))[list(self.scenario_state_dict.values()).index(status)]
+                if new_scenario_state is not None:
+                    new_scenario_state_str = struct.pack(
+                        "<I", new_scenario_state)
+                    scenario_state_span = (
+                        scenario_span[1] - 4, scenario_span[1])
+                    self.txt = self._replace_substring_inplace(
+                        self.txt, new_scenario_state_str, scenario_state_span)
+                    new_scenario_state = struct.unpack(
+                        "<I", self.txt[scenario_span[1] - 4: scenario_span[1]])[0]
+                    cur_state = self.scenario_state_dict[current_scenario_state]
+                    new_state = self.scenario_state_dict[new_scenario_state]
+                    print(
+                        f"Scenario {scenario} was changed from {cur_state} to {new_state}.")
             else:
                 print(f"Scenario {scenario} is currently {self.scenario_state_dict[current_scenario_state]}.")
                 print("I can't change the state of such a scenario.")
